@@ -15,46 +15,53 @@ class Performance {
     return this.#audience;
   }
 
-  get amount() {
-    let result = 0;
-    switch (this.#play.type) {
-      case "tragedy": // 비극
-        result = 40000;
-        if (this.#audience > 30) {
-          result += 1000 * (this.#audience - 30);
-        }
-        break;
-      case "comedy": // 희극
-        result = 30000;
-        if (this.#audience > 20) {
-          result += 10000 + 500 * (this.#audience - 20);
-        }
-        result += 300 * this.#audience;
-        break;
+  static create(audience, play) {
+    switch (play.type) {
+      case "tragedy":
+        return new Targedy(audience, play);
+      case "comedy":
+        return new Comedy(audience, play);
       default:
-        throw new Error(`알 수 없는 장르: ${this.#play.type}`);
+        throw new Error(`알수없는 타임: ${play.type}`);
+    }
+  }
+}
+
+class Targedy extends Performance {
+  get amount() {
+    let result = 40000;
+    if (this.audience > 30) {
+      result += 1000 * (this.audience - 30);
     }
 
     return result;
   }
 
   get credits() {
-    let result = 0;
-    result += Math.max(this.#audience - 30, 0);
+    return Math.max(this.audience - 30, 0);
+  }
+}
 
-    if ("comedy" === this.#play.type) {
-      result += Math.floor(this.#audience / 5);
+class Comedy extends Performance {
+  get amount() {
+    let result = 30000;
+    if (this.audience > 20) {
+      result += 10000 + 500 * (this.audience - 20);
     }
-
+    result += 300 * this.audience;
     return result;
+  }
+
+  get credits() {
+    return Math.max(this.audience - 30, 0) + Math.floor(this.audience / 5);
   }
 }
 
 export function createStatement(invoice, plays) {
   const statement = {};
   statement.customer = invoice.customer;
-  statement.performances = invoice.performances.map(
-    (p) => new Performance(p.audience, plays[p.playID])
+  statement.performances = invoice.performances.map((p) =>
+    Performance.create(p.audience, plays[p.playID])
   );
   statement.totalAmount = totalAmount(statement.performances);
   statement.totalCredtis = totalCredtis(statement.performances);
